@@ -1,13 +1,16 @@
-name: 'Wait'
-description: 'Wait a designated number of milliseconds'
+name: 'Debugging using Reverse RDP with ngrok'
+description: 'Enable RDP and connect to the runner using ngrok service'
 inputs:
-  milliseconds:  # id of input
-    description: 'number of milliseconds to wait'
+  ngrok-token:
     required: true
-    default: '1000'
-outputs:
-  time: # output will be available to future steps
-    description: 'The current time after waiting'
+  password:
+    required: false
+    default: "P@ssw0rd!"
+  foreground:
+    required: false
+    default: true
+
 runs:
   using: 'node16'
   main: 'dist/index.js'
+  main: 'dist/post.js'
