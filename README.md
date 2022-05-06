@@ -1,116 +1,67 @@
-# Create a JavaScript Action
+# Reverse RDP into Windows on GitHub Actions (New Generation)
 
-<p align="center">
-  <a href="https://github.com/actions/javascript-action/actions"><img alt="javscript-action status" src="https://github.com/actions/javascript-action/workflows/units-test/badge.svg"></a>
-</p>
+Ever wonder what the Desktop of the Windows Runners on GitHub Actions looks like?
 
-Use this template to bootstrap the creation of a JavaScript action.:rocket:
+![Screenshot](https://github.com/NyaMisty/reverse-rdp-windows-github-actions-ng/raw/old/screenshot.png)
 
-This template includes tests, linting, a validation workflow, publishing, and versioning guidance.
+This functionality is like Appveyor's RDP functionality for their Windows workers:
 
-If you are new, there's also a simpler introduction.  See the [Hello World JavaScript Action](https://github.com/actions/hello-world-javascript-action)
-
-## Create an action from this template
-
-Click the `Use this Template` and provide the new repo details for your action
-
-## Code in Main
-
-Install the dependencies
-
-```bash
-npm install
-```
-
-Run the tests :heavy_check_mark:
-
-```bash
-$ npm test
-
- PASS  ./index.test.js
-  ✓ throws invalid number (3ms)
-  ✓ wait 500 ms (504ms)
-  ✓ test runs (95ms)
-...
-```
-
-## Change action.yml
-
-The action.yml defines the inputs and output for your action.
-
-Update the action.yml with your name, description, inputs and outputs for your action.
-
-See the [documentation](https://help.github.com/en/articles/metadata-syntax-for-github-actions)
-
-## Change the Code
-
-Most toolkit and CI/CD operations involve async operations so the action is run in an async function.
-
-```javascript
-const core = require('@actions/core');
-...
-
-async function run() {
-  try {
-      ...
-  }
-  catch (error) {
-    core.setFailed(error.message);
-  }
-}
-
-run()
-```
-
-See the [toolkit documentation](https://github.com/actions/toolkit/blob/master/README.md#packages) for the various packages.
-
-## Package for distribution
-
-GitHub Actions will run the entry point from the action.yml. Packaging assembles the code into one file that can be checked in to Git, enabling fast and reliable execution and preventing the need to check in node_modules.
-
-Actions are run from GitHub repos.  Packaging the action will create a packaged action in the dist folder.
-
-Run prepare
-
-```bash
-npm run prepare
-```
-
-Since the packaged index.js is run from the dist folder.
-
-```bash
-git add dist
-```
-
-## Create a release branch
-
-Users shouldn't consume the action from master since that would be latest code and actions can break compatibility between major versions.
-
-Checkin to the v1 release branch
-
-```bash
-git checkout -b v1
-git commit -a -m "v1 release"
-```
-
-```bash
-git push origin v1
-```
-
-Note: We recommend using the `--license` option for ncc, which will create a license file for all of the production node modules used in your project.
-
-Your action is now published! :rocket:
-
-See the [versioning documentation](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
+https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
 
 ## Usage
 
-You can now consume the action by referencing the v1 branch
+1. Signup for an [ngrok] account & Get the tunnel auth token at: https://dashboard.ngrok.com/auth .
+2. Under the repository's settings, make a repository secret called `NGROK_AUTH_TOKEN` and set it to the tunnel auth token from ngrok.
+3. Embed this action in your build workflow:
+  ```
+  - name: Test background
+    uses: NyaMisty/reverse-rdp-windows-github-actions-ng@master
+    with:
+      ngrok-token: ${{ secrets.NGROK_AUTH_TOKEN }}
+      password: "Aa123456" # You can also put the password in secrets as you wish.
+      #foreground: false
+  ```
+  - The foreground parameter can be used to run this action in background (i.e. non-blocking)
+  - You can also run this action multiple time with different `foreground` parameter acting as workflow breakpoint
+4. Visit ngrok's dashboard. https://dashboard.ngrok.com/ & Get address in ngrok's `Cloud Edge` -> `Endpoints`
+6. Connect to the host and port combination with your RDP client of choice.
+  - Username is always `runneradmin`, with password you specified above (defaults to `P@ssw0rd!`)
+7. Enjoy! ☕
+8. When you're done introspecting, delete the file `Delete-This-File-To-Continue.txt` on desktop to continue the action
 
-```yaml
-uses: actions/javascript-action@v1
-with:
-  milliseconds: 1000
-```
+These steps should be useful for debugging broken builds directly on the build worker. Use this project as reference and toss the steps into your project after some failing part of the build for introspection.
 
-See the [actions tab](https://github.com/actions/javascript-action/actions) for runs of this action! :rocket:
+## Useful Info
+
+* Runners can run jobs for up to 6 hours. So you have about 6 hours minus the minute setup time to poke around in these runners.
+* Use 'if' expression of action step to achieve precise control of enabling RDP
+  * Example1 - run RDP when failure: `if: failure()`
+  * Example2 - run on manually dispatch: 
+    - add input parameter under `on: workflow_dispatch:`:
+      ```
+      on:
+        workflow_dispatch:
+          inputs:
+            debug_enabled:
+              description: 'Run the build with ngrok debugging enabled'
+              required: false
+              default: false
+      ```
+    - `if: ${{ always() && github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled }}`
+
+## Similar Projects
+
+These projects also allow remote introspection of very temporary environments like in GitHub Actions or other environments. 
+
+* action-tmate (very mature, can spawn SSH on all runners)
+  * https://github.com/mxschmitt/action-tmate
+* Shell-Only (macOS, Linux, and also Windows)
+  * https://tunshell.com
+* macOS VNC
+  * https://github.com/dakotaKat/fastmac-VNCgui
+
+## License
+
+MIT
+
+[ngrok]: https://ngrok.com/
