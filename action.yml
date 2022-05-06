@@ -1,5 +1,10 @@
 name: 'Debugging using Reverse RDP with ngrok'
 description: 'Enable RDP and connect to the runner using ngrok service'
+
+branding:
+  icon: airplay
+  color: blue
+
 inputs:
   ngrok-token:
     required: true
